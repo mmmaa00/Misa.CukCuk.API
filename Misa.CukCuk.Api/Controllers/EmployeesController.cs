@@ -8,17 +8,18 @@ using Misa.CukCuk.Api.Model;
 using MySqlConnector;
 using System.Data;
 using Dapper;
+using System.Text.RegularExpressions;
 
 namespace Misa.CukCuk.Api.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class CustomerGroupsController : ControllerBase
+    public class EmployeesController : ControllerBase
     {
         /// <summary>
-        /// Hàm lấy thông tin toàn bộ nhóm khách hàng
+        /// Hàm lấy thông tin toàn bộ nhân viên
         /// </summary>
-        /// <returns>Mảng thông tin toàn bộ nhóm khách hàng</returns>
+        /// <returns>Mảng thông tin toàn bộ nhân viên</returns>
         [HttpGet]
         public IActionResult GetAll()
         {
@@ -36,13 +37,13 @@ namespace Misa.CukCuk.Api.Controllers
                 IDbConnection dbConnection = new MySqlConnection(connectionString);
 
                 // 3. Lấy dữ liệu
-                var sqlCommand = "SELECT * FROM CustomerGroup";
-                var customerGroups = dbConnection.Query<object>(sqlCommand);
+                var sqlCommand = "SELECT * FROM Employee";
+                var employees = dbConnection.Query<object>(sqlCommand);
 
                 // 4. Trả về cho Client
-                if (customerGroups.Count() > 0)
+                if (employees.Count() > 0)
                 {
-                    var response = StatusCode(200, customerGroups);
+                    var response = StatusCode(200, employees);
                     return response;
                 }
                 else
@@ -65,12 +66,12 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm lấy thông tin của nhóm khách hàng theo Id
+        /// Hàm lấy thông tin của nhân viên theo Id
         /// </summary>
-        /// <param name="customerGroupId"></param>
-        /// <returns>Thông tin của nhóm khách hàng</returns>
-        [HttpGet("{customerGroupId}")]
-        public IActionResult GetById(Guid customerGroupId)
+        /// <param name="employeeId"></param>
+        /// <returns>Thông tin của nhân viên</returns>
+        [HttpGet("{employeeId}")]
+        public IActionResult GetById(Guid employeeId)
         {
             try
             {
@@ -87,19 +88,19 @@ namespace Misa.CukCuk.Api.Controllers
 
                 // 3. Lấy dữ liệu
                 DynamicParameters dynamicParameters = new DynamicParameters();
-                dynamicParameters.Add("@CustomerGroupIdParam", customerGroupId);
+                dynamicParameters.Add("@EmployeeIdParam", employeeId);
 
-                var sqlCommand = "SELECT * FROM CustomerGroup WHERE customerGroupId = @CustomerGroupIdParam";
-                var customer = dbConnection.QueryFirstOrDefault<object>(sqlCommand, dynamicParameters);
+                var sqlCommand = "SELECT * FROM Employee WHERE employeeId = @EmployeeIdParam";
+                var employee = dbConnection.QueryFirstOrDefault<object>(sqlCommand, dynamicParameters);
 
                 // 4. Trả về cho Client
-                if (customer == null)
+                if (employee == null)
                 {
                     return StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
                 }
                 else
                 {
-                    return StatusCode(200, customer);
+                    return StatusCode(200, employee);
                 }
             }
             catch (Exception ex)
@@ -117,19 +118,53 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm tạo nhóm khách hàng mới
+        /// Hàm tạo nhân viên mới
         /// </summary>
-        /// <param name="customerGroup"></param>
+        /// <param name="employee"></param>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult CreateCustomerGroup([FromBody] CustomerGroup customerGroup)
+        public IActionResult CreateEmployee([FromBody] Employee employee)
         {
             try
             {
-                // Kiểm tra thông tin của nhóm khách hàng đã hợp lệ hay chưa?
+                // Kiểm tra thông tin của nhân viên đã hợp lệ hay chưa?
 
-                // 1. Tên nhóm khách hàng bắt buộc phải có
-                if (customerGroup.CustomerGroupName == "" || customerGroup.CustomerGroupName == null)
+                // 1. Mã nhân viên bắt buộc phải có
+                if (employee.EmployeeCode == "" || employee.EmployeeCode == null)
+                {
+                    var errorObj = new
+                    {
+                        userMsg = Properties.ResourcesVN.Error_EmptyInput_VN,
+                        errorCode = "misa-002",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return BadRequest(errorObj);
+                }
+
+                // 2. Email phải đúng định dạng
+                var emailFormat = @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+                var isMatch = Regex.IsMatch(employee.Email, emailFormat, RegexOptions.IgnoreCase);
+                if (isMatch == false)
+                {
+                    var errorObj = new
+                    {
+                        userMsg = Properties.ResourcesVN.Error_Input_VN,
+                        errorCode = "misa-002",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return BadRequest(errorObj);
+                }
+
+                // 3. Các trường bắt buộc phải có: Tên, số điện thoại
+                bool TestForNullOrEmpty(string s)
+                {
+                    bool result;
+                    result = s == null || s == string.Empty;
+                    return result;
+                }
+                if (TestForNullOrEmpty(employee.FullName) || TestForNullOrEmpty(employee.PhoneNumber))
                 {
                     var errorObj = new
                     {
@@ -160,11 +195,11 @@ namespace Misa.CukCuk.Api.Controllers
                 var columnsParam = string.Empty;
                 var dynamicParameters = new DynamicParameters();
 
-                // Sinh customerGroupId
-                customerGroup.CustomerGroupId = Guid.NewGuid();
+                // Sinh customerId
+                employee.EmployeeId = Guid.NewGuid();
 
                 // Đọc từng property của object
-                var properties = customerGroup.GetType().GetProperties();
+                var properties = employee.GetType().GetProperties();
 
                 // Duyệt từng property
                 foreach (var property in properties)
@@ -173,7 +208,7 @@ namespace Misa.CukCuk.Api.Controllers
                     var propName = property.Name;
 
                     // Lấy value của property
-                    var propValue = property.GetValue(customerGroup);
+                    var propValue = property.GetValue(employee);
 
                     // Lấy kiểu của property
                     var propType = property.PropertyType;
@@ -189,7 +224,7 @@ namespace Misa.CukCuk.Api.Controllers
                 columnsName = columnsName.Remove(columnsName.Length - 1, 1);
                 columnsParam = columnsParam.Remove(columnsParam.Length - 1, 1);
 
-                var sqlCommand = $"INSERT INTO CustomerGroup({columnsName}) VALUES({columnsParam})";
+                var sqlCommand = $"INSERT INTO Employee({columnsName}) VALUES({columnsParam})";
                 var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
                 // 4. Trả về cho Client
@@ -217,13 +252,13 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm sửa thông tin nhóm khách hàng
+        /// Hàm sửa thông tin nhân viên
         /// </summary>
-        /// <param name="customerGroupId"></param>
-        /// <param name="customerGroup"></param>
+        /// <param name="employeeId"></param>
+        /// <param name="employee"></param>
         /// <returns></returns>
-        [HttpPut("{customerGroupId}")]
-        public IActionResult UpdateCustomerGroup([FromRoute] Guid customerGroupId, [FromBody] CustomerGroup customerGroup)
+        [HttpPut("{employeeId}")]
+        public IActionResult UpdateEmployee([FromRoute] Guid employeeId, [FromBody] Employee employee)
         {
             try
             {
@@ -244,7 +279,7 @@ namespace Misa.CukCuk.Api.Controllers
                 var dynamicParameters = new DynamicParameters();
 
                 // Đọc từng property của object
-                var properties = customerGroup.GetType().GetProperties();
+                var properties = employee.GetType().GetProperties();
 
                 // Duyệt từng property
                 foreach (var property in properties)
@@ -253,7 +288,7 @@ namespace Misa.CukCuk.Api.Controllers
                     var propName = property.Name;
 
                     // Lấy value của property
-                    var propValue = property.GetValue(customerGroup);
+                    var propValue = property.GetValue(employee);
 
                     // Lấy kiểu của property
                     var propType = property.PropertyType;
@@ -265,8 +300,8 @@ namespace Misa.CukCuk.Api.Controllers
 
                 // Loại bỏ dấu phẩy
                 columnsName = columnsName.Remove(columnsName.Length - 1, 1);
-                dynamicParameters.Add("@CustomerGroupIdParam", customerGroupId);
-                var sqlCommand = $"UPDATE CustomerGroup SET {columnsName} WHERE customerGroupId = @CustomerGroupIdParam";
+                dynamicParameters.Add("@EmployeeIdParam", employeeId);
+                var sqlCommand = $"UPDATE Employee SET {columnsName} WHERE employeeId = @EmployeeIdParam";
                 var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
                 // 4. Trả về cho Client
@@ -294,12 +329,12 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm xóa nhóm khách hàng theo Id
+        /// Hàm xóa nhân viên theo Id
         /// </summary>
-        /// <param name="customerGroupId"></param>
+        /// <param name="employeeId"></param>
         /// <returns></returns>
-        [HttpDelete("{customerGroupId}")]
-        public IActionResult DeleteById(Guid customerGroupId)
+        [HttpDelete("{employeeId}")]
+        public IActionResult DeleteById(Guid employeeId)
         {
             try
             {
@@ -316,9 +351,9 @@ namespace Misa.CukCuk.Api.Controllers
 
                 // 3. Xóa dữ liệu
                 DynamicParameters dynamicParameters = new DynamicParameters();
-                dynamicParameters.Add("@CustomerGroupIdParam", customerGroupId);
+                dynamicParameters.Add("@EmployeeIdParam", employeeId);
 
-                var sqlCommand = "DELETE FROM CustomerGroup WHERE customerGroupId = @CustomerGroupIdParam";
+                var sqlCommand = "DELETE FROM Employee WHERE employeeId = @EmployeeIdParam";
                 var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
                 // 4. Trả về cho Client

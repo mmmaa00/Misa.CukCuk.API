@@ -8,17 +8,16 @@ using Misa.CukCuk.Api.Model;
 using MySqlConnector;
 using System.Data;
 using Dapper;
-
 namespace Misa.CukCuk.Api.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class CustomerGroupsController : ControllerBase
+    public class DepartmentsController : ControllerBase
     {
         /// <summary>
-        /// Hàm lấy thông tin toàn bộ nhóm khách hàng
+        /// Hàm lấy thông tin toàn bộ phòng ban
         /// </summary>
-        /// <returns>Mảng thông tin toàn bộ nhóm khách hàng</returns>
+        /// <returns>Mảng thông tin toàn bộ phòng ban</returns>
         [HttpGet]
         public IActionResult GetAll()
         {
@@ -36,13 +35,13 @@ namespace Misa.CukCuk.Api.Controllers
                 IDbConnection dbConnection = new MySqlConnection(connectionString);
 
                 // 3. Lấy dữ liệu
-                var sqlCommand = "SELECT * FROM CustomerGroup";
-                var customerGroups = dbConnection.Query<object>(sqlCommand);
+                var sqlCommand = "SELECT * FROM Department";
+                var departments = dbConnection.Query<object>(sqlCommand);
 
                 // 4. Trả về cho Client
-                if (customerGroups.Count() > 0)
+                if (departments.Count() > 0)
                 {
-                    var response = StatusCode(200, customerGroups);
+                    var response = StatusCode(200, departments);
                     return response;
                 }
                 else
@@ -65,12 +64,12 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm lấy thông tin của nhóm khách hàng theo Id
+        /// Hàm lấy thông tin của phòng ban theo Id
         /// </summary>
-        /// <param name="customerGroupId"></param>
-        /// <returns>Thông tin của nhóm khách hàng</returns>
-        [HttpGet("{customerGroupId}")]
-        public IActionResult GetById(Guid customerGroupId)
+        /// <param name="departmentId"></param>
+        /// <returns>Thông tin của phòng ban</returns>
+        [HttpGet("{departmentId}")]
+        public IActionResult GetById(Guid departmentId)
         {
             try
             {
@@ -87,19 +86,19 @@ namespace Misa.CukCuk.Api.Controllers
 
                 // 3. Lấy dữ liệu
                 DynamicParameters dynamicParameters = new DynamicParameters();
-                dynamicParameters.Add("@CustomerGroupIdParam", customerGroupId);
+                dynamicParameters.Add("@DepartmentIdParam", departmentId);
 
-                var sqlCommand = "SELECT * FROM CustomerGroup WHERE customerGroupId = @CustomerGroupIdParam";
-                var customer = dbConnection.QueryFirstOrDefault<object>(sqlCommand, dynamicParameters);
+                var sqlCommand = "SELECT * FROM Department WHERE departmentId = @DepartmentIdParam";
+                var department = dbConnection.QueryFirstOrDefault<object>(sqlCommand, dynamicParameters);
 
                 // 4. Trả về cho Client
-                if (customer == null)
+                if (department == null)
                 {
                     return StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
                 }
                 else
                 {
-                    return StatusCode(200, customer);
+                    return StatusCode(200, department);
                 }
             }
             catch (Exception ex)
@@ -117,19 +116,32 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm tạo nhóm khách hàng mới
+        /// Hàm tạo phòng ban
         /// </summary>
-        /// <param name="customerGroup"></param>
+        /// <param name="department"></param>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult CreateCustomerGroup([FromBody] CustomerGroup customerGroup)
+        public IActionResult CreateDepartment([FromBody] Department department)
         {
             try
             {
-                // Kiểm tra thông tin của nhóm khách hàng đã hợp lệ hay chưa?
+                // Kiểm tra thông tin của phòng ban đã hợp lệ hay chưa?
 
-                // 1. Tên nhóm khách hàng bắt buộc phải có
-                if (customerGroup.CustomerGroupName == "" || customerGroup.CustomerGroupName == null)
+                // 1. Tên phòng ban bắt buộc phải có
+                if (department.DepartmentName == "" || department.DepartmentName == null)
+                {
+                    var errorObj = new
+                    {
+                        userMsg = Properties.ResourcesVN.Error_EmptyInput_VN,
+                        errorCode = "misa-002",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return BadRequest(errorObj);
+                }
+
+                // 2. Mã phòng ban không được để trống
+                if (department.DepartmentCode == "" || department.DepartmentCode == null)
                 {
                     var errorObj = new
                     {
@@ -160,11 +172,11 @@ namespace Misa.CukCuk.Api.Controllers
                 var columnsParam = string.Empty;
                 var dynamicParameters = new DynamicParameters();
 
-                // Sinh customerGroupId
-                customerGroup.CustomerGroupId = Guid.NewGuid();
+                // Sinh departmentId
+                department.DepartmentId = Guid.NewGuid();
 
                 // Đọc từng property của object
-                var properties = customerGroup.GetType().GetProperties();
+                var properties = department.GetType().GetProperties();
 
                 // Duyệt từng property
                 foreach (var property in properties)
@@ -173,7 +185,7 @@ namespace Misa.CukCuk.Api.Controllers
                     var propName = property.Name;
 
                     // Lấy value của property
-                    var propValue = property.GetValue(customerGroup);
+                    var propValue = property.GetValue(department);
 
                     // Lấy kiểu của property
                     var propType = property.PropertyType;
@@ -189,7 +201,7 @@ namespace Misa.CukCuk.Api.Controllers
                 columnsName = columnsName.Remove(columnsName.Length - 1, 1);
                 columnsParam = columnsParam.Remove(columnsParam.Length - 1, 1);
 
-                var sqlCommand = $"INSERT INTO CustomerGroup({columnsName}) VALUES({columnsParam})";
+                var sqlCommand = $"INSERT INTO Department({columnsName}) VALUES({columnsParam})";
                 var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
                 // 4. Trả về cho Client
@@ -217,13 +229,13 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm sửa thông tin nhóm khách hàng
+        /// Hàm sửa thông tin phòng ban
         /// </summary>
-        /// <param name="customerGroupId"></param>
-        /// <param name="customerGroup"></param>
+        /// <param name="departmentId"></param>
+        /// <param name="department"></param>
         /// <returns></returns>
-        [HttpPut("{customerGroupId}")]
-        public IActionResult UpdateCustomerGroup([FromRoute] Guid customerGroupId, [FromBody] CustomerGroup customerGroup)
+        [HttpPut("{departmentId}")]
+        public IActionResult UpdateDepartment([FromRoute] Guid departmentId, [FromBody] Department department)
         {
             try
             {
@@ -244,7 +256,7 @@ namespace Misa.CukCuk.Api.Controllers
                 var dynamicParameters = new DynamicParameters();
 
                 // Đọc từng property của object
-                var properties = customerGroup.GetType().GetProperties();
+                var properties = department.GetType().GetProperties();
 
                 // Duyệt từng property
                 foreach (var property in properties)
@@ -253,7 +265,7 @@ namespace Misa.CukCuk.Api.Controllers
                     var propName = property.Name;
 
                     // Lấy value của property
-                    var propValue = property.GetValue(customerGroup);
+                    var propValue = property.GetValue(department);
 
                     // Lấy kiểu của property
                     var propType = property.PropertyType;
@@ -265,8 +277,8 @@ namespace Misa.CukCuk.Api.Controllers
 
                 // Loại bỏ dấu phẩy
                 columnsName = columnsName.Remove(columnsName.Length - 1, 1);
-                dynamicParameters.Add("@CustomerGroupIdParam", customerGroupId);
-                var sqlCommand = $"UPDATE CustomerGroup SET {columnsName} WHERE customerGroupId = @CustomerGroupIdParam";
+                dynamicParameters.Add("@DepartmentIdParam", departmentId);
+                var sqlCommand = $"UPDATE Department SET {columnsName} WHERE departmentId = @departmentIdParam";
                 var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
                 // 4. Trả về cho Client
@@ -294,12 +306,12 @@ namespace Misa.CukCuk.Api.Controllers
         }
 
         /// <summary>
-        /// Hàm xóa nhóm khách hàng theo Id
+        /// Hàm xóa phòng ban theo Id
         /// </summary>
-        /// <param name="customerGroupId"></param>
+        /// <param name="departmentId"></param>
         /// <returns></returns>
-        [HttpDelete("{customerGroupId}")]
-        public IActionResult DeleteById(Guid customerGroupId)
+        [HttpDelete("{departmentId}")]
+        public IActionResult DeleteById(Guid departmentId)
         {
             try
             {
@@ -316,9 +328,9 @@ namespace Misa.CukCuk.Api.Controllers
 
                 // 3. Xóa dữ liệu
                 DynamicParameters dynamicParameters = new DynamicParameters();
-                dynamicParameters.Add("@CustomerGroupIdParam", customerGroupId);
+                dynamicParameters.Add("@DepartmentIdParam", departmentId);
 
-                var sqlCommand = "DELETE FROM CustomerGroup WHERE customerGroupId = @CustomerGroupIdParam";
+                var sqlCommand = "DELETE FROM Department WHERE departmentId = @DepartmentIdParam";
                 var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
                 // 4. Trả về cho Client
