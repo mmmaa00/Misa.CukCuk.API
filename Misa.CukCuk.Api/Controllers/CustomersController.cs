@@ -8,256 +8,328 @@ using Misa.CukCuk.Api.Model;
 using MySqlConnector;
 using System.Data;
 using Dapper;
+using System.Text.RegularExpressions;
 
 namespace Misa.CukCuk.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class CustomersController : ControllerBase
     {
         /// <summary>
-        /// Lấy tất cả khách hàng
+        /// Hàm lấy thông tin toàn bộ khách hàng
         /// </summary>
-        /// <returns>Trả về danh sách toàn bộ khách hàng</returns>
+        /// <returns>Mảng thông tin toàn bộ khách hàng</returns>
         [HttpGet]
         public IActionResult GetAll()
         {
-            // Truy cập vào database
 
-            // 1. Khai báo thông tin kết nối database:
+            try
+            {
+                // Truy cập vào database
 
-            var connectionString = "Host = 47.241.69.179;" +
-                "Database = MISA.CukCuk_Demo_NVMANH;" +
-                "User Id = dev;" +
-                "Password = 12345678";
+                // 1. Khai báo thông tin kết nối database:
 
-            // 2. Khởi tạo đối tượng kết nối với Database
+                var connectionString = "Host = 47.241.69.179;" +
+                    "Database = MISA.CukCuk_Demo_NVMANH;" +
+                    "User Id = dev;" +
+                    "Password = 12345678";
 
-            IDbConnection dbConnection = new MySqlConnection(connectionString);
+                // 2. Khởi tạo đối tượng kết nối với Database
 
-            // 3. Lấy dữ liệu
+                IDbConnection dbConnection = new MySqlConnection(connectionString);
 
-            var sqlCommand = "SELECT * FROM Customer";
-            var customers = dbConnection.Query<object>(sqlCommand);
+                // 3. Lấy dữ liệu
 
-            // 4. Trả về cho Client
+                var sqlCommand = "SELECT * FROM Customer";
+                var customers = dbConnection.Query<object>(sqlCommand);
 
-            var response = StatusCode(200, customers);
-            return response;
+                // 4. Trả về cho Client
+                if (customers.Count() > 0)
+                {
+                    var response = StatusCode(200, customers);
+                    return response;
+                }
+                else
+                {
+                    return StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                var errorObj = new
+                {
+                    devMsg = ex.Message,
+                    userMsg = Properties.ResourcesVN.Exception_ErrorMsg_VN,
+                    errorCode = "misa-001",
+                    moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                    traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                };
+                return StatusCode(500, errorObj);
+            }
+
         }
 
         /// <summary>
-        /// Lấy khách hàng theo Id
+        /// Hàm lấy thông tin của khách hàng theo Id
         /// </summary>
-        /// <returns>Trả về khách hàng có id theo yêu cầu tìm kiếm</returns>
-        //[HttpGet("{customerId}")]
-        //public IActionResult GetById(Guid customerId)
-        //{
-        //    Truy cập vào database
-
-        //     1.Khai báo thông tin kết nối database:
-
-        //    var connectionString = "Host = 47.241.69.179;" +
-        //        "Database = MISA.CukCuk_Demo_NVMANH;" +
-        //        "User Id = dev;" +
-        //        "Password = 12345678";
-
-        //    2.Khởi tạo đối tượng kết nối với Database
-
-        //  IDbConnection dbConnection = new MySqlConnection(connectionString);
-
-        //    3.Lấy dữ liệu
-
-        //    var sqlCommand = $"SELECT * FROM Customer WHERE customerId = '{customerId.ToString()}' ";
-        //    var customer = dbConnection.QueryFirstOrDefault<object>(sqlCommand);
-
-        //    4.Trả về cho Client
-
-        //  var response = StatusCode(200, customer);
-        //    return response;
-        //}
-
+        /// <param name="customerId"></param>
+        /// <returns>Thông tin của khách hàng</returns>
         [HttpGet("{customerId}")]
         public IActionResult GetById(Guid customerId)
         {
-            // Truy cập vào database
-
-            // 1. Khai báo thông tin kết nối database:
-
-            var connectionString = "Host = 47.241.69.179;" +
-                "Database = MISA.CukCuk_Demo_NVMANH;" +
-                "User Id = dev;" +
-                "Password = 12345678";
-
-            // 2. Khởi tạo đối tượng kết nối với Database
-
-            IDbConnection dbConnection = new MySqlConnection(connectionString);
-
-            // 3. Lấy dữ liệu
-
-            DynamicParameters dynamicParameters = new DynamicParameters();
-            dynamicParameters.Add("@CustomerIdParam", customerId);
-            var sqlCommand = "SELECT * FROM Customer WHERE customerId = @CustomerIdParam";
-            var customer = dbConnection.QueryFirstOrDefault<object>(sqlCommand, dynamicParameters);
-
-            // 4. Trả về cho Client
-
-            var response = StatusCode(200, customer);
-            return response;
-        }
-
-        /// <summary>
-        /// Lấy khách hàng theo Code
-        /// </summary>
-        /// <returns>Trả về khách hàng có code theo yêu cầu tìm kiếm</returns>
-        [HttpGet("getByCode")]
-        public IActionResult GetByCode(string customerCode)
-        {
-            // Truy cập vào database
-
-            // 1. Khai báo thông tin kết nối database:
-
-            var connectionString = "Host = 47.241.69.179;" +
-                "Database = MISA.CukCuk_Demo_NVMANH;" +
-                "User Id = dev;" +
-                "Password = 12345678";
-
-            // 2. Khởi tạo đối tượng kết nối với Database
-
-            IDbConnection dbConnection = new MySqlConnection(connectionString);
-
-            // 3. Lấy dữ liệu
-
-            var sqlCommand = $"SELECT * FROM Customer WHERE customerCode = '{customerCode}' ";
-            var customer = dbConnection.QueryFirstOrDefault<object>(sqlCommand);
-
-            // 4. Trả về cho Client
-
-            var response = StatusCode(200, customer);
-            return response;
-        }
-
-        /// <summary>
-        /// Tạo khách hàng mới
-        /// </summary>
-        /// <returns>1 nếu thành công</returns>
-        [HttpPost]
-        public IActionResult CreateCustomer([FromBody]Customer customer)
-        {
-            // Truy cập vào database
-
-            // 1. Khai báo thông tin kết nối database:
-
-            var connectionString = "Host = 47.241.69.179;" +
-                "Database = MISA.CukCuk_Demo_NVMANH;" +
-                "User Id = dev;" +
-                "Password = 12345678";
-
-            // 2. Khởi tạo đối tượng kết nối với Database
-
-            IDbConnection dbConnection = new MySqlConnection(connectionString);
-
-            // 3. Thêm dữ liệu vào database
-
-            var columnsName = string.Empty;
-            var columnsParam = string.Empty;
-            var dynamicParameters = new DynamicParameters();
-
-            // Sinh customerId
-            customer.CustomerId = Guid.NewGuid();
-            // Đọc từng property của object
-            var properties = customer.GetType().GetProperties();
-
-            // Duyệt từng property
-            foreach (var property in properties)
+            try
             {
-                // Lấy tên của property
-                var propName = property.Name;
+                // Truy cập vào database
 
-                // Lấy value của property
-                var propValue = property.GetValue(customer);
+                // 1. Khai báo thông tin kết nối database:
 
-                // Lấy kiểu của property
-                var propType = property.PropertyType;
+                var connectionString = "Host = 47.241.69.179;" +
+                    "Database = MISA.CukCuk_Demo_NVMANH;" +
+                    "User Id = dev;" +
+                    "Password = 12345678";
 
-                // Thêm param tương ứng với mỗi property của object
-                dynamicParameters.Add($"@{propName}",propValue);
+                // 2. Khởi tạo đối tượng kết nối với Database
 
-                columnsName+= $"{propName},";
-                columnsParam+= $"@{propName},";
+                IDbConnection dbConnection = new MySqlConnection(connectionString);
+
+                // 3. Lấy dữ liệu
+
+
+                DynamicParameters dynamicParameters = new DynamicParameters();
+                dynamicParameters.Add("@CustomerIdParam", customerId);
+
+                var sqlCommand = "SELECT * FROM Customer WHERE customerId = @CustomerIdParam";
+                var customer = dbConnection.QueryFirstOrDefault<object>(sqlCommand, dynamicParameters);
+
+                // 4. Trả về cho Client
+                if (customer == null)
+                {
+                    var response = StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
+                    return response;
+                } else {
+                    var response = StatusCode(200, customer);
+                    return response;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                var errorObj = new
+                {
+                    devMsg = ex.Message,
+                    userMsg = Properties.ResourcesVN.Exception_ErrorMsg_VN,
+                    errorCode = "misa-001",
+                    moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                    traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                };
+                return StatusCode(500, errorObj);
+            }
+        }
+
+        /// <summary>
+        /// Hàm tạo khách hàng mới
+        /// </summary>
+        /// <param name="customer"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public IActionResult CreateCustomer([FromBody] Customer customer)
+        {
+            try {
+                // Kiểm tra thông tin của khách hàng đã hợp lệ hay chưa?
+
+                // 1. Mã khách hàng bắt buộc phải có
+                if (customer.CustomerCode == "" || customer.CustomerCode == null)
+                {
+                    var errorObj = new
+                    {
+                        userMsg = Properties.ResourcesVN.Error_EmptyInput_VN,
+                        errorCode = "misa-001",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return BadRequest(errorObj);
+                }
+
+                // 2. Email phải đúng địng dạng
+                //var emailFormat = @"^(?!\.)(""([^""\r\\]|\\[""\r\\])*""|" + @"([-a-z0-9!#$%&'+/=?^_`{|}~]|(?<!\.)\.))(?<!\.)" + @"@[a-z0-9][\w\.-]*[a-z0-9]\.[a-z][a-z\.]*[a-z]$"; ;
+                //var isMatch = Regex.IsMatch(customer.Email, emailFormat, RegexOptions.IgnoreCase);
+                //if(isMatch == false)
+                //{
+                //    var errorObj = new
+                //    {
+                //        userMsg = Properties.ResourcesVN.Error_Input_VN,
+                //        errorCode = "misa-001",
+                //        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                //        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                //    };
+                //    return BadRequest(errorObj);
+                //}
+
+                // Truy cập vào database
+
+                // 1. Khai báo thông tin kết nối database:
+
+                var connectionString = "Host = 47.241.69.179;" +
+                    "Database = MISA.CukCuk_Demo_NVMANH;" +
+                    "User Id = dev;" +
+                    "Password = 12345678";
+
+                // 2. Khởi tạo đối tượng kết nối với Database
+
+                IDbConnection dbConnection = new MySqlConnection(connectionString);
+
+                // 3. Thêm dữ liệu vào database
+
+                var columnsName = string.Empty;
+                var columnsParam = string.Empty;
+                var dynamicParameters = new DynamicParameters();
+
+                // Sinh customerId
+                customer.CustomerId = Guid.NewGuid();
+                // Đọc từng property của object
+                var properties = customer.GetType().GetProperties();
+
+                // Duyệt từng property
+                foreach (var property in properties)
+                {
+                    // Lấy tên của property
+                    var propName = property.Name;
+
+                    // Lấy value của property
+                    var propValue = property.GetValue(customer);
+
+                    // Lấy kiểu của property
+                    var propType = property.PropertyType;
+
+                    // Thêm param tương ứng với mỗi property của object
+                    dynamicParameters.Add($"@{propName}", propValue);
+
+                    columnsName += $"{propName},";
+                    columnsParam += $"@{propName},";
+                }
+
+                // Loại bỏ dấu phẩy
+                columnsName = columnsName.Remove(columnsName.Length - 1, 1);
+                columnsParam = columnsParam.Remove(columnsParam.Length - 1, 1);
+
+                var sqlCommand = $"INSERT INTO Customer({columnsName}) VALUES({columnsParam})";
+                var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
+
+                // 4. Trả về cho Client
+                if (rowEffects > 0)
+                {
+                    return StatusCode(201, Properties.ResourcesVN.Created_VN);
+                }
+                else
+                {
+                    return BadRequest(Properties.ResourcesVN.Duplicate_VN);
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorObj = new
+                {
+                    devMsg = ex.Message,
+                    userMsg = Properties.ResourcesVN.Exception_ErrorMsg_VN,
+                    errorCode = "misa-001",
+                    moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                    traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                };
+                return StatusCode(500, errorObj);
             }
 
-            // Loại bỏ dấu phẩy
-            columnsName = columnsName.Remove(columnsName.Length - 1, 1);
-            columnsParam = columnsParam.Remove(columnsParam.Length - 1, 1);
-     
-            var sqlCommand = $"INSERT INTO Customer({columnsName}) VALUES({columnsParam})";
-            var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
-            
-            // 4. Trả về cho Client
-
-            var response = StatusCode(200, rowEffects);
-            return response;
         }
 
         /// <summary>
-        /// Sửa thông tin khách hàng
+        /// Hàm sửa thông tin khách hàng
         /// </summary>
-        /// <returns>1 nếu thành công</returns>
+        /// <param name="customerId"></param>
+        /// <param name="customer"></param>
+        /// <returns></returns>
         [HttpPut("{customerId}")]
         public IActionResult UpdateCustomer(Guid customerId, Customer customer)
         {
-            // Truy cập vào database
-
-            // 1. Khai báo thông tin kết nối database:
-
-            var connectionString = "Host = 47.241.69.179;" +
-                "Database = MISA.CukCuk_Demo_NVMANH;" +
-                "User Id = dev;" +
-                "Password = 12345678";
-
-            // 2. Khởi tạo đối tượng kết nối với Database
-
-            IDbConnection dbConnection = new MySqlConnection(connectionString);
-
-            // 3. Thêm dữ liệu vào database
-
-            var columnsName = string.Empty;
-            var columnsParam = string.Empty;
-            var dynamicParameters = new DynamicParameters();
-
-            // Đọc từng property của object
-            var properties = customer.GetType().GetProperties();
-
-            // Duyệt từng property
-            foreach (var property in properties)
+            try
             {
-                // Lấy tên của property
-                var propName = property.Name;
+                // Truy cập vào database
 
-                // Lấy value của property
-                var propValue = property.GetValue(customer);
+                // 1. Khai báo thông tin kết nối database:
 
-                // Lấy kiểu của property
-                var propType = property.PropertyType;
+                var connectionString = "Host = 47.241.69.179;" +
+                    "Database = MISA.CukCuk_Demo_NVMANH;" +
+                    "User Id = dev;" +
+                    "Password = 12345678";
 
-                // Thêm param tương ứng với mỗi property của object
-                dynamicParameters.Add($"@{propName}", propValue);
-                columnsName += $"{propName} = @{propName},";
-               
+                // 2. Khởi tạo đối tượng kết nối với Database
+
+                IDbConnection dbConnection = new MySqlConnection(connectionString);
+
+                // 3. Thêm dữ liệu vào database
+
+                var columnsName = string.Empty;
+                var columnsParam = string.Empty;
+                var dynamicParameters = new DynamicParameters();
+
+                // Đọc từng property của object
+                var properties = customer.GetType().GetProperties();
+
+                // Duyệt từng property
+                foreach (var property in properties)
+                {
+                    // Lấy tên của property
+                    var propName = property.Name;
+
+                    // Lấy value của property
+                    var propValue = property.GetValue(customer);
+
+                    // Lấy kiểu của property
+                    var propType = property.PropertyType;
+
+                    // Thêm param tương ứng với mỗi property của object
+                    dynamicParameters.Add($"@{propName}", propValue);
+                    columnsName += $"{propName} = @{propName},";
+
+                }
+
+                // Loại bỏ dấu phẩy
+                columnsName = columnsName.Remove(columnsName.Length - 1, 1);
+                dynamicParameters.Add("@CustomerIdParam", customerId);
+                var sqlCommand = $"UPDATE Customer SET {columnsName} WHERE customerId = @CustomerIdParam";
+                var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
+
+                // 4. Trả về cho Client
+                if (rowEffects > 0)
+                {
+                    var response = new
+                    {
+                        userMsg = Properties.ResourcesVN.Updated_VN,
+                        errorCode = "misa-001",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return StatusCode(200, response);
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
-
-            // Loại bỏ dấu phẩy
-            columnsName = columnsName.Remove(columnsName.Length - 1, 1);
-            dynamicParameters.Add("@CustomerIdParam", customerId);
-            var sqlCommand = $"UPDATE Customer SET {columnsName} WHERE customerId = @CustomerIdParam";
-            var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
-
-            // 4. Trả về cho Client
-
-            var response = StatusCode(200, rowEffects);
-            return response;
+            catch (Exception ex)
+            {
+                var errorObj = new
+                {
+                    devMsg = ex.Message,
+                    userMsg = Properties.ResourcesVN.Exception_ErrorMsg_VN,
+                    errorCode = "misa-001",
+                    moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                    traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                };
+                return StatusCode(500, errorObj);
+            }
         }
+            
 
         /// <summary>
         /// Xóa khách hàng theo id
@@ -266,31 +338,60 @@ namespace Misa.CukCuk.Api.Controllers
         [HttpDelete("{customerId}")]
         public IActionResult DeleteById(Guid customerId)
         {
-            // Truy cập vào database
+            try
+            {
+                // Truy cập vào database
 
-            // 1. Khai báo thông tin kết nối database:
+                // 1. Khai báo thông tin kết nối database:
 
-            var connectionString = "Host = 47.241.69.179;" +
-                "Database = MISA.CukCuk_Demo_NVMANH;" +
-                "User Id = dev;" +
-                "Password = 12345678";
+                var connectionString = "Host = 47.241.69.179;" +
+                    "Database = MISA.CukCuk_Demo_NVMANH;" +
+                    "User Id = dev;" +
+                    "Password = 12345678";
 
-            // 2. Khởi tạo đối tượng kết nối với Database
+                // 2. Khởi tạo đối tượng kết nối với Database
 
-            IDbConnection dbConnection = new MySqlConnection(connectionString);
+                IDbConnection dbConnection = new MySqlConnection(connectionString);
 
-            // 3. Xóa dữ liệu
+                // 3. Xóa dữ liệu
 
-            DynamicParameters dynamicParameters = new DynamicParameters();
-            dynamicParameters.Add("@CustomerIdParam", customerId);
+                DynamicParameters dynamicParameters = new DynamicParameters();
+                dynamicParameters.Add("@CustomerIdParam", customerId);
 
-            var sqlCommand = "DELETE FROM Customer WHERE customerId = @CustomerIdParam";
-            var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
+                var sqlCommand = "DELETE FROM Customer WHERE customerId = @CustomerIdParam";
+                var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
-            // 4. Trả về cho Client
+                // 4. Trả về cho Client
 
-            var response = StatusCode(200, rowEffects);
-            return response;
+                if (rowEffects > 0)
+                {
+                    var response = new
+                    {
+                        userMsg = Properties.ResourcesVN.Deleted_VN,
+                        errorCode = "misa-001",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return StatusCode(200, response);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch(Exception ex)
+            {
+                var errorObj = new
+                {
+                    devMsg = ex.Message,
+                    userMsg = Properties.ResourcesVN.Exception_ErrorMsg_VN,
+                    errorCode = "misa-001",
+                    moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                    traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                };
+                return StatusCode(500, errorObj);
+            }
         }
+            
     }
 }

@@ -267,11 +267,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Minh Anh\\Misa.CukCuk\\Misa.CukCuk.Api\\Misa.CukCuk.Api.csproj",
+      "projectUniqueName": "D:\\API\\Misa.CukCuk\\Misa.CukCuk.Api\\Misa.CukCuk.Api.csproj",
       "projectName": "Misa.CukCuk.Api",
-      "projectPath": "D:\\Minh Anh\\Misa.CukCuk\\Misa.CukCuk.Api\\Misa.CukCuk.Api.csproj",
+      "projectPath": "D:\\API\\Misa.CukCuk\\Misa.CukCuk.Api\\Misa.CukCuk.Api.csproj",
       "packagesPath": "C:\\Users\\nguye\\.nuget\\packages\\",
-      "outputPath": "D:\\Minh Anh\\Misa.CukCuk\\Misa.CukCuk.Api\\obj\\",
+      "outputPath": "D:\\API\\Misa.CukCuk\\Misa.CukCuk.Api\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\nguye\\AppData\\Roaming\\NuGet\\NuGet.Config",
