@@ -61,7 +61,7 @@ namespace Misa.CukCuk.Api.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tạo khách hàng mới thành công!.
+        ///   Looks up a localized string similar to Tạo thông tin mới thành công!.
         /// </summary>
         public static string Created_VN {
             get {
@@ -70,7 +70,7 @@ namespace Misa.CukCuk.Api.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Xóa khách hàng thành công!.
+        ///   Looks up a localized string similar to Xóa thông tin thành công!.
         /// </summary>
         public static string Deleted_VN {
             get {
@@ -124,7 +124,7 @@ namespace Misa.CukCuk.Api.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Thay đổi thông tin khách hàng thành công!.
+        ///   Looks up a localized string similar to Thay đổi thông tin thành công!.
         /// </summary>
         public static string Updated_VN {
             get {

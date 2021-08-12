@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Created_VN" xml:space="preserve">
-    <value>Tạo khách hàng mới thành công!</value>
+    <value>Tạo thông tin mới thành công!</value>
   </data>
   <data name="Deleted_VN" xml:space="preserve">
-    <value>Xóa khách hàng thành công!</value>
+    <value>Xóa thông tin thành công!</value>
   </data>
   <data name="Duplicate_VN" xml:space="preserve">
     <value>Dữ liệu bị trùng!</value>
@@ -139,6 +139,6 @@
     <value>Đã xảy ra lỗi. Vui lòng liên hệ Misa!</value>
   </data>
   <data name="Updated_VN" xml:space="preserve">
-    <value>Thay đổi thông tin khách hàng thành công!</value>
+    <value>Thay đổi thông tin thành công!</value>
   </data>
 </root>

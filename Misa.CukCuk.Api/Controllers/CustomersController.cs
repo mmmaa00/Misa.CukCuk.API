@@ -23,24 +23,20 @@ namespace Misa.CukCuk.Api.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-
             try
             {
                 // Truy cập vào database
 
                 // 1. Khai báo thông tin kết nối database:
-
                 var connectionString = "Host = 47.241.69.179;" +
                     "Database = MISA.CukCuk_Demo_NVMANH;" +
                     "User Id = dev;" +
                     "Password = 12345678";
 
                 // 2. Khởi tạo đối tượng kết nối với Database
-
                 IDbConnection dbConnection = new MySqlConnection(connectionString);
 
                 // 3. Lấy dữ liệu
-
                 var sqlCommand = "SELECT * FROM Customer";
                 var customers = dbConnection.Query<object>(sqlCommand);
 
@@ -54,7 +50,6 @@ namespace Misa.CukCuk.Api.Controllers
                 {
                     return StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
                 }
-
             }
             catch (Exception ex)
             {
@@ -68,7 +63,6 @@ namespace Misa.CukCuk.Api.Controllers
                 };
                 return StatusCode(500, errorObj);
             }
-
         }
 
         /// <summary>
@@ -84,19 +78,15 @@ namespace Misa.CukCuk.Api.Controllers
                 // Truy cập vào database
 
                 // 1. Khai báo thông tin kết nối database:
-
                 var connectionString = "Host = 47.241.69.179;" +
                     "Database = MISA.CukCuk_Demo_NVMANH;" +
                     "User Id = dev;" +
                     "Password = 12345678";
 
                 // 2. Khởi tạo đối tượng kết nối với Database
-
                 IDbConnection dbConnection = new MySqlConnection(connectionString);
 
                 // 3. Lấy dữ liệu
-
-
                 DynamicParameters dynamicParameters = new DynamicParameters();
                 dynamicParameters.Add("@CustomerIdParam", customerId);
 
@@ -106,13 +96,11 @@ namespace Misa.CukCuk.Api.Controllers
                 // 4. Trả về cho Client
                 if (customer == null)
                 {
-                    var response = StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
-                    return response;
-                } else {
-                    var response = StatusCode(200, customer);
-                    return response;
+                    return StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
+                } 
+                else {
+                    return StatusCode(200, customer); 
                 }
-
             }
             catch (Exception ex)
             {
@@ -136,7 +124,8 @@ namespace Misa.CukCuk.Api.Controllers
         [HttpPost]
         public IActionResult CreateCustomer([FromBody] Customer customer)
         {
-            try {
+            try
+            {
                 // Kiểm tra thông tin của khách hàng đã hợp lệ hay chưa?
 
                 // 1. Mã khách hàng bắt buộc phải có
@@ -145,7 +134,7 @@ namespace Misa.CukCuk.Api.Controllers
                     var errorObj = new
                     {
                         userMsg = Properties.ResourcesVN.Error_EmptyInput_VN,
-                        errorCode = "misa-001",
+                        errorCode = "misa-002",
                         moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
                         traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
                     };
@@ -153,19 +142,38 @@ namespace Misa.CukCuk.Api.Controllers
                 }
 
                 // 2. Email phải đúng địng dạng
-                //var emailFormat = @"^(?!\.)(""([^""\r\\]|\\[""\r\\])*""|" + @"([-a-z0-9!#$%&'+/=?^_`{|}~]|(?<!\.)\.))(?<!\.)" + @"@[a-z0-9][\w\.-]*[a-z0-9]\.[a-z][a-z\.]*[a-z]$"; ;
-                //var isMatch = Regex.IsMatch(customer.Email, emailFormat, RegexOptions.IgnoreCase);
-                //if(isMatch == false)
-                //{
-                //    var errorObj = new
-                //    {
-                //        userMsg = Properties.ResourcesVN.Error_Input_VN,
-                //        errorCode = "misa-001",
-                //        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
-                //        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
-                //    };
-                //    return BadRequest(errorObj);
-                //}
+                var emailFormat = @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+                var isMatch = Regex.IsMatch(customer.Email, emailFormat, RegexOptions.IgnoreCase);
+                if (isMatch == false)
+                {
+                    var errorObj = new
+                    {
+                        userMsg = Properties.ResourcesVN.Error_Input_VN,
+                        errorCode = "misa-002",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return BadRequest(errorObj);
+                }
+
+                // 3. Các trường bắt buộc phải có: Tên, số điện thoại
+                bool TestForNullOrEmpty(string s)
+                {
+                    bool result;
+                    result = s == null || s == string.Empty;
+                    return result;
+                }
+                if (TestForNullOrEmpty(customer.FullName) || TestForNullOrEmpty(customer.PhoneNumber))
+                {
+                    var errorObj = new
+                    {
+                        userMsg = Properties.ResourcesVN.Error_EmptyInput_VN,
+                        errorCode = "misa-002",
+                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
+                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
+                    };
+                    return BadRequest(errorObj);
+                }
 
                 // Truy cập vào database
 
@@ -188,6 +196,7 @@ namespace Misa.CukCuk.Api.Controllers
 
                 // Sinh customerId
                 customer.CustomerId = Guid.NewGuid();
+                
                 // Đọc từng property của object
                 var properties = customer.GetType().GetProperties();
 
@@ -239,7 +248,6 @@ namespace Misa.CukCuk.Api.Controllers
                 };
                 return StatusCode(500, errorObj);
             }
-
         }
 
         /// <summary>
@@ -249,25 +257,22 @@ namespace Misa.CukCuk.Api.Controllers
         /// <param name="customer"></param>
         /// <returns></returns>
         [HttpPut("{customerId}")]
-        public IActionResult UpdateCustomer(Guid customerId, Customer customer)
+        public IActionResult UpdateCustomer([FromRoute]Guid customerId,[FromBody] Customer customer)
         {
             try
             {
                 // Truy cập vào database
 
                 // 1. Khai báo thông tin kết nối database:
-
                 var connectionString = "Host = 47.241.69.179;" +
                     "Database = MISA.CukCuk_Demo_NVMANH;" +
                     "User Id = dev;" +
                     "Password = 12345678";
 
                 // 2. Khởi tạo đối tượng kết nối với Database
-
                 IDbConnection dbConnection = new MySqlConnection(connectionString);
 
                 // 3. Thêm dữ liệu vào database
-
                 var columnsName = string.Empty;
                 var columnsParam = string.Empty;
                 var dynamicParameters = new DynamicParameters();
@@ -290,7 +295,6 @@ namespace Misa.CukCuk.Api.Controllers
                     // Thêm param tương ứng với mỗi property của object
                     dynamicParameters.Add($"@{propName}", propValue);
                     columnsName += $"{propName} = @{propName},";
-
                 }
 
                 // Loại bỏ dấu phẩy
@@ -302,18 +306,11 @@ namespace Misa.CukCuk.Api.Controllers
                 // 4. Trả về cho Client
                 if (rowEffects > 0)
                 {
-                    var response = new
-                    {
-                        userMsg = Properties.ResourcesVN.Updated_VN,
-                        errorCode = "misa-001",
-                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
-                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
-                    };
-                    return StatusCode(200, response);
+                    return StatusCode(200, Properties.ResourcesVN.Updated_VN);
                 }
                 else
                 {
-                    return BadRequest();
+                    return StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
                 }
             }
             catch (Exception ex)
@@ -330,11 +327,11 @@ namespace Misa.CukCuk.Api.Controllers
             }
         }
             
-
         /// <summary>
-        /// Xóa khách hàng theo id
+        /// Hàm xóa khách hàng theo Id
         /// </summary>
-        /// <returns>1 nếu thành công</returns>
+        /// <param name="customerId"></param>
+        /// <returns></returns>
         [HttpDelete("{customerId}")]
         public IActionResult DeleteById(Guid customerId)
         {
@@ -343,18 +340,15 @@ namespace Misa.CukCuk.Api.Controllers
                 // Truy cập vào database
 
                 // 1. Khai báo thông tin kết nối database:
-
                 var connectionString = "Host = 47.241.69.179;" +
                     "Database = MISA.CukCuk_Demo_NVMANH;" +
                     "User Id = dev;" +
                     "Password = 12345678";
 
                 // 2. Khởi tạo đối tượng kết nối với Database
-
                 IDbConnection dbConnection = new MySqlConnection(connectionString);
 
                 // 3. Xóa dữ liệu
-
                 DynamicParameters dynamicParameters = new DynamicParameters();
                 dynamicParameters.Add("@CustomerIdParam", customerId);
 
@@ -362,21 +356,13 @@ namespace Misa.CukCuk.Api.Controllers
                 var rowEffects = dbConnection.Execute(sqlCommand, param: dynamicParameters);
 
                 // 4. Trả về cho Client
-
                 if (rowEffects > 0)
                 {
-                    var response = new
-                    {
-                        userMsg = Properties.ResourcesVN.Deleted_VN,
-                        errorCode = "misa-001",
-                        moreInfo = "https://openapi.misa.com.vn/errorcode/misa-001",
-                        traceId = "ba9587fd-1a79-4ac5-a0ca-2c9f74dfd3fb"
-                    };
-                    return StatusCode(200, response);
+                    return StatusCode(200, Properties.ResourcesVN.Deleted_VN);
                 }
                 else
                 {
-                    return BadRequest();
+                    return StatusCode(204, Properties.ResourcesVN.EmptyData_VN);
                 }
             }
             catch(Exception ex)
@@ -391,7 +377,6 @@ namespace Misa.CukCuk.Api.Controllers
                 };
                 return StatusCode(500, errorObj);
             }
-        }
-            
+        }       
     }
 }
